@@ -78,7 +78,13 @@ class Game:
     # Main loop for game.
     def run_game(self):
         self.run_loop = True
-        self.gb.init_menu(self.options)
+        try:
+            self.gb.init_menu(self.options)
+        except Exception as e:
+            print(f"Error initializing menu: {e}")
+            # Continue anyway - we have fallbacks
+            self.options.is_the_first_run = True
+
         while self.run_loop:
             for event in self.gb.pg.event.get():
                 if event.type == self.gb.pg.QUIT:

@@ -14,15 +14,15 @@ class Foo:
         EMPTY_CELL: 'assets/empty_figure.png'
     }
 
-    AVATAR_WOLF_IMG_URL = "assets/avatar_wolf.jpg"
-    AVATAR_SHEEP_IMG_URL = "assets/avatar_sheep.jpg"
+    AVATAR_WOLF_IMG_URL = "assets/avatar_wolf.png"
+    AVATAR_SHEEP_IMG_URL = "assets/avatar_sheep.png"
     VICTORY_MESSAGE = "assets/victory_msg.png"
     RESET_BTN = "assets/reset_btn.png"
     MENU_BTN = "assets/menu_btn.png"
     SKIP_TURN_BTN = "assets/skip_turn_msg.png"
     COMPUTER_MSG = "assets/computer_msg.png"
     PLAYER_MSG = "assets/player_msg.png"
-    MENU_BG = "assets/menu-bg.jpg"
+    MENU_BG = "assets/menu-bg.png"
     SET_WOLF_MSG = "assets/set_wolf_msg.png"
     ALPHABET_IMG = "assets/alphabet-728x28.png"
     NUMBERS_IMG = "assets/numbers-728x28.png"
