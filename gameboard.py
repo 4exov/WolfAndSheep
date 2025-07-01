@@ -427,7 +427,7 @@ class Gameboard:
             # Try loading image with safe_load_image
             bg_image = self.safe_load_image(Foo.MENU_BG)
             self.win.blit(bg_image, self.pg.rect.Rect(0, 0, self.WIN_WIDTH, self.WIN_HEIGHT))
-            print("Successfully loaded menu background")
+           # print("Successfully loaded menu background")
         except Exception as e:
             # Create a more visually appealing fallback background
             for i in range(0, self.WIN_HEIGHT, 10):
