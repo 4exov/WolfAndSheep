@@ -2,8 +2,13 @@ from typing import Optional
 from .position import Position
 from .types import Move
 from .evaluate import evaluate
-
+from .search_config import SearchConfig
 INF = 10**9
+
+def find_best_move_with_config(pos: Position, cfg: SearchConfig) -> Optional[Move]:
+    # For now, just map to the existing function. We’ll upgrade behind the same API.
+    depth = cfg.max_depth
+    return find_best_move(pos, depth)   # your current implementation
 
 def alphabeta(pos: Position, depth: int, alpha: int, beta: int) -> int:
     done, score = pos.is_terminal()
