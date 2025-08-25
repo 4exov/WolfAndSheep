@@ -85,6 +85,32 @@ class Position:
             return True, -10**9     # sheep win
         return False, 0
 
+    # Place the wolf on any empty black square (does NOT change side_to_move)
+    def can_place_wolf(self, i: int, j: int) -> bool:
+        return self.in_bounds(i, j) and self.is_black_square(i, j) and self.board[i][j] == Piece.EMPTY
+
+    def place_wolf(self, i: int, j: int) -> bool:
+        if not self.can_place_wolf(i, j):
+            return False
+        wi, wj = self.wolf_pos
+        self.board[wi][wj] = Piece.EMPTY
+        self.board[i][j] = Piece.WOLF
+        self.wolf_pos = (i, j)
+        return True
+
+    def can_place_wolf(self, i: int, j: int) -> bool:
+        return self.in_bounds(i, j) and self.is_black_square(i, j) and self.board[i][j] == Piece.EMPTY
+
+    def place_wolf(self, i: int, j: int) -> bool:
+        if not self.can_place_wolf(i, j):
+            return False
+        wi, wj = self.wolf_pos
+        self.board[wi][wj] = Piece.EMPTY
+        self.board[i][j] = Piece.WOLF
+        self.wolf_pos = (i, j)
+        return True
+
+
 # --- Factory: create a standard starting position ---
 def from_options_start(size: int = 8, wolf_at_top: bool = False) -> "Position":
     """

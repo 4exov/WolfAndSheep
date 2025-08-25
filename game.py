@@ -5,8 +5,12 @@ from foo import Foo
 import queue
 import copy
 import time
-
+from engine.position import from_options_start
+from engine.types import Piece, Side, Move
+from engine.search import find_best_move
 class Game:
+
+
     run_loop = False
 
     options = None
@@ -36,10 +40,15 @@ class Game:
     search_way = queue.Queue()
 
     possible_moves = [[1, -1], [1, 1], [-1, -1], [-1, 1]]
-
     def __init__(self):
         self.options = Options()
         self.gb = Gameboard(self.options)
+        self.pos = None  # engine Position
+        # UI state
+        self.board = []
+        self.wolf = Foo.NOT_INIT
+        self.sheeps = []
+        self.selected_figure = None
 
     # Initialization and load data.
     def init_board(self):
@@ -47,6 +56,7 @@ class Game:
         cell_size = Gameboard.GAMEBOARD_SIZE // self.options.board_size
         self.options.cell_size = cell_size
 
+        # Build the empty UI cells
         line_y = Gameboard.GAMEBOARD_ZERO_Y
         colours = [Foo.COLOR_BLACK_NERO, Foo.COLOR_WHITESMOKE]
         for i in range(self.options.board_size):
@@ -54,26 +64,43 @@ class Game:
             line_x = Gameboard.GAMEBOARD_ZERO_X
             for j in range(self.options.board_size):
                 sq = Cell(line_x, line_y, i, j, colours[((i + j) % 2)], cell_size)
-
-                # Set Wolf
-                if self.options.set_wolf_manually == Foo.SET_WOLF_MANUALLY_NO:
-                    wolf_line = 0 if self.options.who_is_top == Foo.WOLF else (self.options.board_size - 1)
-                    if i == wolf_line and sq.color == Foo.COLOR_BLACK_NERO and self.wolf == Foo.NOT_INIT:
-                        sq.figure = Foo.WOLF
-                        self.wolf = sq
-                        self.options.is_wolf_position_init = True
-
-                # Set Sheep
-                sheep_line = 0 if self.options.who_is_top == Foo.SHEEP else (self.options.board_size - 1)
-                if i == (sheep_line) and sq.color == Foo.COLOR_BLACK_NERO:
-                    sq.figure = Foo.SHEEP
-                    self.sheeps.append(sq)
-
+                sq.figure = Foo.EMPTY_CELL
                 line_cells.append(sq)
                 line_x += cell_size
-
             self.board.append(line_cells)
             line_y += cell_size
+
+        # NEW: build the engine start position (wolf bottom if who_is_top == SHEEP)
+        wolf_at_top = (self.options.who_is_top == Foo.WOLF)
+        self.pos = from_options_start(size=self.options.board_size, wolf_at_top=wolf_at_top)
+
+        # Mirror engine -> UI
+        self.sync_from_engine_to_ui()
+        self.options.is_init_board = True
+
+    def sync_from_engine_to_ui(self):
+        """Copy pieces and side-to-move from engine into UI cells."""
+        self.sheeps = []
+        self.wolf = Foo.NOT_INIT
+
+        for i in range(self.options.board_size):
+            for j in range(self.options.board_size):
+                v = self.pos.board[i][j]
+                if v == Piece.EMPTY:
+                    self.board[i][j].figure = Foo.EMPTY_CELL
+                elif v == Piece.WOLF:
+                    self.board[i][j].figure = Foo.WOLF
+                    self.wolf = self.board[i][j]
+                elif v == Piece.SHEEP:
+                    self.board[i][j].figure = Foo.SHEEP
+                    self.sheeps.append(self.board[i][j])
+
+        # Keep whose_move in sync
+        self.options.whose_move = Foo.WOLF if self.pos.side_to_move == Side.WOLF else Foo.SHEEP
+
+        # During placement mode, DO NOT auto-finalize wolf placement flag
+        if not getattr(self.options, "placement_mode", False):
+            self.options.is_wolf_position_init = True
 
     # Main loop for game.
     def run_game(self):
@@ -154,7 +181,10 @@ class Game:
     # Skip wolf move.
     def skip_wolf_move(self):
         self.unselect_figure_cell(self.wolf)
-        self.options.whose_move = Foo.SHEEP
+        # Keep engine and UI in sync: consume Wolf's turn
+        if self.pos and self.pos.side_to_move == Side.WOLF:
+            self.pos.side_to_move = Side.SHEEP
+        self.sync_from_engine_to_ui()
         self.gb.draw_board(self.options, self.board, 0)
 
     # Check area for restart game.
@@ -263,36 +293,48 @@ class Game:
         cell.unselect()
 
     # Event select.
+    # game.py
+    from engine.types import Side  # make sure this import exists at the top
+
     def on_select(self, cell):
+        # 1) Manual wolf placement phase (one legal click repositions wolf)
+        if getattr(self.options, "placement_mode", False):
+            i, j = cell.i, cell.j
+            # Only empty black squares allowed
+            if ((i + j) % 2) == 0 and cell.is_empty() and self.pos.place_wolf(i, j):
+                # Mirror engine -> UI
+                self.sync_from_engine_to_ui()
+                # Placement complete
+                self.options.is_wolf_position_init = True
+                self.options.placement_mode = False
+
+                # Optional: placement consumes Wolf's move
+                if self.options.is_manually_set_wolf_cancels_move and self.pos.side_to_move == Side.WOLF:
+                    self.pos.side_to_move = Side.SHEEP
+                    self.sync_from_engine_to_ui()
+
+                self.gb.draw_board(self.options, self.board, 0)
+            # Either we placed or ignored an illegal square — in placement mode we return either way
+            return
+
+        # 2) Normal play (selection / unselection / move)
         is_selected = cell.selected
-        i = cell.i
-        j = cell.j
 
-        # Set wolf manually
-        if not self.options.is_wolf_position_init and cell.is_empty() and ((i + j) % 2) == 0:
-            cell.figure = Foo.WOLF
-            self.wolf = cell
-            self.select_figure_cell(cell)
-            self.options.is_wolf_position_init = True
-
-            if self.options.is_manually_set_wolf_cancels_move:
-                self.skip_wolf_move()
-
-        # Select figure to move(unselect if other figure already selected)
-        elif not (cell.is_empty()) and not is_selected and cell.figure == self.options.whose_move:
-
+        # Select a piece of the side to move
+        if (not cell.is_empty()) and (not is_selected) and (cell.figure == self.options.whose_move):
             if self.selected_figure is not None:
                 self.unselect_figure_cell(self.selected_figure)
             self.select_figure_cell(cell)
 
-        # Unselect figure. Target cell already selected.
+        # Unselect the currently selected piece
         elif is_selected:
             self.unselect_figure_cell(cell)
 
-        # Make move
-        elif cell.is_empty() and (self.selected_figure is not None) and (self.is_valid_move_from_selected_figure(cell)):
+        # Try to make a legal move using engine legality
+        elif cell.is_empty() and (self.selected_figure is not None) and self.is_valid_move_from_selected_figure(cell):
             self.move_selected_figure_to_position(cell)
 
+        # Redraw after any UI change
         self.gb.draw_board(self.options, self.board, 0)
 
     # TODO: Rewrite this function!
@@ -301,6 +343,8 @@ class Game:
         from_j = from_cell.j
         to_i = to_cell.i
         to_j = to_cell.j
+        if getattr(self.options, "placement_mode", False):
+            return False
 
         if to_cell.is_empty():
             if player == Foo.WOLF:
@@ -317,20 +361,27 @@ class Game:
         return False
 
     # TODO: Rewrite this function!
-    def is_valid_move_from_selected_figure(self, cell):
-        if cell.color is Foo.COLOR_BLACK_NERO and cell.is_empty():
-            if self.options.whose_move == Foo.WOLF:
-                if self.is_valid_move_for_player(Foo.WOLF, self.selected_figure, cell):
-                    return True
-                else:
-                    return False
-            elif self.options.whose_move == Foo.SHEEP:  # sheep
-                if self.is_valid_move_for_player(Foo.SHEEP, self.selected_figure, cell):
-                    return True
-                else:
-                    return False
-        else:  # white cell
-            return Foo.TROUBLE
+    def is_valid_move_from_selected_figure(self, cell_to):
+        """Use engine move-gen instead of UI-only rules."""
+        if self.selected_figure is None:
+            return False
+
+        fi, fj = self.selected_figure.i, self.selected_figure.j
+        ti, tj = cell_to.i, cell_to.j
+
+        # Only allow black squares (keeps UI rule consistent)
+        if ((ti + tj) % 2) != 0:
+            return False
+
+        # Ensure side-to-move matches selected piece
+        if self.options.whose_move == Foo.WOLF and self.board[fi][fj].figure != Foo.WOLF:
+            return False
+        if self.options.whose_move == Foo.SHEEP and self.board[fi][fj].figure != Foo.SHEEP:
+            return False
+
+        # Ask engine for legal moves from (fi,fj)
+        legal = self.pos.generate_moves_from(fi, fj)
+        return any(m.ti == ti and m.tj == tj for m in legal)
 
     # Move figure from to.
     def move_figure(self, cell_from, cell_to):
@@ -341,36 +392,28 @@ class Game:
 
     # TODO: Rewrite this function!
     def move_selected_figure_to_position(self, cell_to):
-        if not self.selected_figure == None:
-            print('move_selected_figure_to_position: Move  selected figure: {0}, from ({1}, {2}) to ({3}, {4}).'.format(
-                self.selected_figure.figure,
-                self.selected_figure.i,
-                self.selected_figure.j,
-                cell_to.i,
-                cell_to.j
-            ))
-            
-
-            if self.options.whose_move == Foo.WOLF:
-                self.move_figure(self.selected_figure, cell_to)
-                self.options.whose_move = Foo.SHEEP
-                self.wolf = cell_to
-
-            else:
-                self.move_figure(self.selected_figure, cell_to)
-                self.options.whose_move = Foo.WOLF
-                self.update_sheeps(self.selected_figure, cell_to)
-
-            self.unselect_figure_cell(self.selected_figure)
-
-            print('move_selected_figure_to_position: Current move: {0}, Selected figure: {1}).'.format(
-                'WOLF' if self.options.whose_move == Foo.WOLF else 'SHEEP',
-                'NaN' if self.selected_figure == None else self.selected_figure.figure
-            ))
-
-        else:
-            print('move_selected_figure_to_position: ERROR - There are not any selected figures.')
+        if self.selected_figure is None:
+            print('move_selected_figure_to_position: ERROR - no selected figure.')
             return False
+
+        fi, fj = self.selected_figure.i, self.selected_figure.j
+        ti, tj = cell_to.i, cell_to.j
+
+        # Find the corresponding engine move
+        legal = self.pos.generate_moves_from(fi, fj)
+        move = next((m for m in legal if m.ti == ti and m.tj == tj), None)
+        if move is None:
+            print(f'Illegal move {fi, fj}->{ti, tj}')
+            return False
+
+        # Make it in the engine, then mirror to UI
+        self.pos.make(move)
+        self.sync_from_engine_to_ui()
+
+        # Clear selection, redraw
+        self.unselect_figure_cell(self.board[fi][fj])
+        self.gb.draw_board(self.options, self.board, 0)
+        return True
 
     # TODO: Rewrite this function!
     def update_figures(self):
@@ -463,22 +506,12 @@ class Game:
 
     # Check victory
     def check_victory(self):
+        done, score = self.pos.is_terminal()
+        if not done:
+            return None
+        self.options.won = Foo.WOLF if score > 0 else Foo.SHEEP
+        return self.options.won
 
-        # Wolf victory
-        if self.wolf_is_victory():
-            self.options.won = Foo.WOLF
-            return self.options.won
-
-        # Sheep victory
-        if self.wolf_is_lost():
-            self.options.won = Foo.SHEEP
-            return self.options.won
-
-        # Wolf victory
-        sheep_available_moves = self.get_available_moves_by_player(Foo.SHEEP)
-        if len(sheep_available_moves) == 0 and self.options.whose_move == Foo.SHEEP:
-            self.options.won = Foo.WOLF
-            return self.options.won
     def wolf_is_victory(self):
         i = self.wolf.i
         wolf_point = self.options.board_size - 1 if self.options.who_is_top == Foo.WOLF else 0
@@ -499,39 +532,23 @@ class Game:
 
     # AI move.
     def run_AI(self, player):
-        # _______ RUN RESULT MINMAX
         start = time.time()
-        best_move = self.min_max(player, 0, - self.BIG_VALUE, self.BIG_VALUE)
+
+        # Depth: your AI level * 2 as before (tweak later)
+        depth = int(self.options.ai_level) * 2
+        m = find_best_move(self.pos, depth=depth)
+
         end = time.time()
+        print(
+            f"AlphaBeta time: {end - start:.3f}s, depth={depth}, move={None if not m else (m.fi, m.fj, '->', m.ti, m.tj)}")
 
-        print("Minmax operation time is {0}.".format(end - start))
-        self.gb.update()
-        if self.options.whose_move == Foo.WOLF:
+        if not m:
+            print("AI: no legal move. (Likely terminal state)")
+            return
 
-            to_i = self.wolf.i + self.possible_moves[best_move % 4][0]
-            to_j = self.wolf.j + self.possible_moves[best_move % 4][1]
-            self.select_figure_cell(self.wolf)
-
-            if self.is_can_move(to_i, to_j):
-                self.move_selected_figure_to_position(self.board[to_i][to_j])
-                self.gb.draw_board(self.options, self.board, 0)
-            else:
-                print('run_AI: ERROR - move to ({0}, {1}) is impossible. Please make a manual move.  ')
-
-        elif self.options.whose_move == Foo.SHEEP:
-            sheep = self.sheeps[best_move//2]
-            to_i = sheep.i + self.possible_moves[best_move % 2][0]
-            to_j = sheep.j + self.possible_moves[best_move % 2][1]
-            self.select_figure_cell(sheep)
-            if self.is_can_move(to_i, to_j):
-                self.move_selected_figure_to_position(self.board[to_i][to_j])
-                self.gb.draw_board(self.options, self.board, 0)
-            else:
-                print('run_AI: ERROR - move to ({0}, {1}) is impossible. Please make a manual move.  ')
-        else:
-            print('run_AI: error has happened')
-
-        # function for MATH
+        self.pos.make(m)
+        self.sync_from_engine_to_ui()
+        self.gb.draw_board(self.options, self.board, 0)
 
     def prepare_map(self):
         self.map.clear()
