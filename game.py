@@ -36,8 +36,7 @@ class Game:
     BIG_VALUE = 500
 
     map = []
-    current_position = queue.Queue()
-    search_way = queue.Queue()
+
 
     possible_moves = [[1, -1], [1, 1], [-1, -1], [-1, 1]]
     def __init__(self):
@@ -201,8 +200,7 @@ class Game:
         self.wolf = Foo.NOT_INIT
         self.selected_figure = None
         self.map = []
-        self.current_position = queue.Queue()
-        self.search_way = queue.Queue()
+
 
     # Reset game
     def reset_game(self):
@@ -383,12 +381,12 @@ class Game:
         legal = self.pos.generate_moves_from(fi, fj)
         return any(m.ti == ti and m.tj == tj for m in legal)
 
-    # Move figure from to.
-    def move_figure(self, cell_from, cell_to):
-        figure = self.board[cell_from.i][cell_from.j].figure
-        self.board[cell_from.i][cell_from.j].figure = Foo.EMPTY_CELL
-        self.board[cell_to.i][cell_to.j].figure = figure
-        return True
+    # # Move figure from to.
+    # def move_figure(self, cell_from, cell_to):
+    #     figure = self.board[cell_from.i][cell_from.j].figure
+    #     self.board[cell_from.i][cell_from.j].figure = Foo.EMPTY_CELL
+    #     self.board[cell_to.i][cell_to.j].figure = figure
+    #     return True
 
     # TODO: Rewrite this function!
     def move_selected_figure_to_position(self, cell_to):
@@ -416,92 +414,92 @@ class Game:
         return True
 
     # TODO: Rewrite this function!
-    def update_figures(self):
-        wolf_cells = self.get_cells_by_player(Foo.WOLF)
-
-        if len(wolf_cells) > 0:
-            self.wolf = wolf_cells[0]
-
-        sheep_cells = self.get_cells_by_player(Foo.SHEEP)
-        self.sheeps.clear()
-        for sheep in sheep_cells:
-            self.sheeps.append(sheep)
-
-    # TODO: Rewrite this function!
-    def update_sheeps(self, from_cell, to_cell):
-        i = 0
-        for sheep in self.sheeps:
-            if (sheep.i == from_cell.i) and (sheep.j == from_cell.j):
-                self.board[self.sheeps[i].i][self.sheeps[i].j].figure = Foo.EMPTY_CELL
-                self.sheeps[i] = to_cell
-                return True
-            i += 1
-        return False
-
-    # TODO: Rewrite this function!
-    def get_cells_by_player(self, player):
-        cells = []
-        for i in range(self.options.board_size):
-            for j in range(self.options.board_size):
-                if self.board[i][j].figure == player:
-                    cells.append(self.board[i][j])
-        return cells
-
-    # TODO: Rewrite this function!
-    def get_available_moves_for_cell(self, player, cell):
-        moves = []
-        cells_for_test = []
-        i = cell.i
-        j = cell.j
-
-        test_moves = [
-            {
-                'i': i - 1,
-                'j': j + 1
-            },
-            {
-                'i': i - 1,
-                'j': j - 1
-            },
-            {
-                'i': i + 1,
-                'j': j + 1
-            },
-            {
-                'i': i + 1,
-                'j': j - 1
-            }
-
-        ]
-        for move in test_moves:
-            k = move['i']
-            l = move['j']
-            try:
-                ca = self.board[k][l]
-                cells_for_test.append(ca)
-
-            except IndexError:
-                continue
-
-        for c in cells_for_test:
-            if self.is_valid_move_for_player(player, cell, c):
-                moves.append(c)
-
-        return moves
-
-    # TODO: Rewrite this function!
-    def get_available_moves_by_player(self, player):
-        if player == Foo.WOLF:
-            return self.get_available_moves_for_cell(Foo.WOLF, self.wolf)
-        elif player == Foo.SHEEP:
-            avlbl_moves = []
-            for sheep in self.sheeps:
-                moves = self.get_available_moves_for_cell(Foo.SHEEP, sheep)
-                for m in moves:
-                    avlbl_moves.append(m)
-            return avlbl_moves
-        else:
-            return Foo.TROUBLE
+    # def update_figures(self):
+    #     wolf_cells = self.get_cells_by_player(Foo.WOLF)
+    #
+    #     if len(wolf_cells) > 0:
+    #         self.wolf = wolf_cells[0]
+    #
+    #     sheep_cells = self.get_cells_by_player(Foo.SHEEP)
+    #     self.sheeps.clear()
+    #     for sheep in sheep_cells:
+    #         self.sheeps.append(sheep)
+    #
+    # # TODO: Rewrite this function!
+    # def update_sheeps(self, from_cell, to_cell):
+    #     i = 0
+    #     for sheep in self.sheeps:
+    #         if (sheep.i == from_cell.i) and (sheep.j == from_cell.j):
+    #             self.board[self.sheeps[i].i][self.sheeps[i].j].figure = Foo.EMPTY_CELL
+    #             self.sheeps[i] = to_cell
+    #             return True
+    #         i += 1
+    #     return False
+    #
+    # # TODO: Rewrite this function!
+    # def get_cells_by_player(self, player):
+    #     cells = []
+    #     for i in range(self.options.board_size):
+    #         for j in range(self.options.board_size):
+    #             if self.board[i][j].figure == player:
+    #                 cells.append(self.board[i][j])
+    #     return cells
+    #
+    # # TODO: Rewrite this function!
+    # def get_available_moves_for_cell(self, player, cell):
+    #     moves = []
+    #     cells_for_test = []
+    #     i = cell.i
+    #     j = cell.j
+    #
+    #     test_moves = [
+    #         {
+    #             'i': i - 1,
+    #             'j': j + 1
+    #         },
+    #         {
+    #             'i': i - 1,
+    #             'j': j - 1
+    #         },
+    #         {
+    #             'i': i + 1,
+    #             'j': j + 1
+    #         },
+    #         {
+    #             'i': i + 1,
+    #             'j': j - 1
+    #         }
+    #
+    #     ]
+    #     for move in test_moves:
+    #         k = move['i']
+    #         l = move['j']
+    #         try:
+    #             ca = self.board[k][l]
+    #             cells_for_test.append(ca)
+    #
+    #         except IndexError:
+    #             continue
+    #
+    #     for c in cells_for_test:
+    #         if self.is_valid_move_for_player(player, cell, c):
+    #             moves.append(c)
+    #
+    #     return moves
+    #
+    # # TODO: Rewrite this function!
+    # def get_available_moves_by_player(self, player):
+    #     if player == Foo.WOLF:
+    #         return self.get_available_moves_for_cell(Foo.WOLF, self.wolf)
+    #     elif player == Foo.SHEEP:
+    #         avlbl_moves = []
+    #         for sheep in self.sheeps:
+    #             moves = self.get_available_moves_for_cell(Foo.SHEEP, sheep)
+    #             for m in moves:
+    #                 avlbl_moves.append(m)
+    #         return avlbl_moves
+    #     else:
+    #         return Foo.TROUBLE
 
 
     # Check victory
@@ -512,20 +510,20 @@ class Game:
         self.options.won = Foo.WOLF if score > 0 else Foo.SHEEP
         return self.options.won
 
-    def wolf_is_victory(self):
-        i = self.wolf.i
-        wolf_point = self.options.board_size - 1 if self.options.who_is_top == Foo.WOLF else 0
-        if i == wolf_point:
-            return True
-        else:
-            return False
-
-    def wolf_is_lost(self):
-        wolf_available_moves = self.get_available_moves_for_cell(Foo.WOLF, self.wolf)
-        if len(wolf_available_moves) != 0:
-            return False
-        else:
-            return True
+    # def wolf_is_victory(self):
+    #     i = self.wolf.i
+    #     wolf_point = self.options.board_size - 1 if self.options.who_is_top == Foo.WOLF else 0
+    #     if i == wolf_point:
+    #         return True
+    #     else:
+    #         return False
+    #
+    # def wolf_is_lost(self):
+    #     wolf_available_moves = self.get_available_moves_for_cell(Foo.WOLF, self.wolf)
+    #     if len(wolf_available_moves) != 0:
+    #         return False
+    #     else:
+    #         return True
 
 
     # _______MATH__________
@@ -550,167 +548,167 @@ class Game:
         self.sync_from_engine_to_ui()
         self.gb.draw_board(self.options, self.board, 0)
 
-    def prepare_map(self):
-        self.map.clear()
-        for i in range(self.options.board_size):
-            tmp_map = []
-            for j in range(self.options.board_size):
-                tmp_map.append(0)
-            self.map.append(tmp_map)
+    # def prepare_map(self):
+    #     self.map.clear()
+    #     for i in range(self.options.board_size):
+    #         tmp_map = []
+    #         for j in range(self.options.board_size):
+    #             tmp_map.append(0)
+    #         self.map.append(tmp_map)
+    #
+    #     self.map[self.wolf.i][self.wolf.j] = Foo.WOLF
+    #
+    #     cells = self.get_cells_by_player(Foo.SHEEP)
+    #     for cell in cells:
+    #         self.map[cell.i][cell.j] = Foo.SHEEP
+    #
+    #     # function for MATH
 
-        self.map[self.wolf.i][self.wolf.j] = Foo.WOLF
+    # def is_can_move(self, i, j):
+    #     if not ((i >= 0) and (j >= 0) and (i < self.options.board_size) and (j < self.options.board_size)):
+    #         return False
+    #     if self.map[i][j] != 0:
+    #         return False
+    #     if self.board[i][j].figure != Foo.EMPTY_CELL:
+    #         return False
+    #
+    #     return True
 
-        cells = self.get_cells_by_player(Foo.SHEEP)
-        for cell in cells:
-            self.map[cell.i][cell.j] = Foo.SHEEP
+    # def temporary_move(self, index, cell_to_i, cell_to_j):
+    #     cell_to = self.board[cell_to_i][cell_to_j]
+    #
+    #     if index == 0:
+    #         self.map[self.wolf.i][self.wolf.j] = 0
+    #         self.map[cell_to_i][cell_to_j] = Foo.WOLF
+    #         self.move_figure(self.wolf, cell_to)
+    #         self.wolf = cell_to
+    #     else:
+    #         sheep = self.sheeps[index - 1]
+    #         self.map[sheep.i][sheep.j] = 0
+    #         self.map[cell_to_i][cell_to_j] = Foo.SHEEP
+    #         self.move_figure(sheep, cell_to)
+    #         self.update_sheeps(sheep, cell_to)
+    #
+    #     # 0..253 -wolf; 254 - victor sheep
 
-        # function for MATH
+    # def min_max(self, player, rec_level, alpha, beta):
+    #     dangerous_wolf_position =False
+    #     if rec_level == 0:
+    #         self.prepare_map()
+    #
+    #     is_sheep = True if (player == Foo.SHEEP) else False
+    #     best_move = self.NOT_INITIALIZED
+    #
+    #     min_max = self.MIN_VALUE if is_sheep else self.MAX_VALUE;
+    #
+    #     result_min_max = self.NOT_INITIALIZED
+    #
+    #     if rec_level >= (self.options.ai_level * 2):
+    #         heuristic = self.get_heuristic_eval()
+    #         self.prepare_map()
+    #         return heuristic
+    #
+    #     moves_eval_dict = {}
+    #
+    #     for i in range(0 if is_sheep else self.options.board_size, self.options.board_size if is_sheep else (self.options.board_size + 4)):
+    #         # self.update_figures()
+    #
+    #         cur_figure_indx = (i // 2 + 1) if is_sheep else 0
+    #
+    #         cur_figure = self.wolf if cur_figure_indx == 0 else self.sheeps[cur_figure_indx - 1]
+    #         cur_move = self.possible_moves[i % 2 if is_sheep else i % 4]
+    #
+    #         back_i = cur_figure.i
+    #         back_j = cur_figure.j
+    #
+    #
+    #         run_minmax = True
+    #         result_min_max = 0
+    #         if self.is_can_move(cur_figure.i + cur_move[0], cur_figure.j + cur_move[1]):
+    #
+    #             self.temporary_move(cur_figure_indx, cur_figure.i + cur_move[0], cur_figure.j + cur_move[1])
+    #             #self.gb.draw_board(self.options, self.board, 800)
+    #
+    #             # Don't run minmax if the wolf have last victory move
+    #             if not is_sheep and rec_level == 0 and self.wolf_is_victory():
+    #                 self.temporary_move(cur_figure_indx, back_i, back_j)
+    #                 best_move = i
+    #                 dangerous_wolf_position = True
+    #                 break
+    #
+    #             # Don't run minmax if sheep have last victory move
+    #             if is_sheep and rec_level == 0 and self.wolf_is_lost():
+    #                 self.temporary_move(cur_figure_indx, back_i, back_j)
+    #                 best_move = i
+    #                 break
+    #
+    #             # Don't commit suicide, dear The Wolf
+    #             if rec_level == 1 and is_sheep and self.wolf_is_lost():
+    #                 result_min_max = self.MAX_VALUE - 1
+    #                 run_minmax = False
+    #
+    #             if run_minmax:
+    #                 result_min_max = self.min_max(Foo.WOLF if is_sheep else Foo.SHEEP, rec_level + 1, alpha, beta)
+    #
+    #             self.temporary_move(cur_figure_indx, back_i, back_j)
+    #             #self.gb.draw_board(self.options, self.board, 800)
+    #
+    #             if rec_level == 0:
+    #                 moves_eval_dict[i] = result_min_max
+    #
+    #             if ((result_min_max > min_max) and is_sheep) or (
+    #                     result_min_max <= min_max and player == Foo.WOLF) or best_move == self.NOT_INITIALIZED:
+    #                 min_max = result_min_max
+    #                 best_move = i
+    #
+    #             if is_sheep:
+    #                 alpha = alpha if alpha > result_min_max else result_min_max
+    #             else:
+    #                 beta = beta if beta < result_min_max else result_min_max
+    #             if (beta < alpha):
+    #                 break
+    #
+    #     if best_move == self.NOT_INITIALIZED:
+    #         heuristic = self.get_heuristic_eval()
+    #         self.prepare_map()
+    #         return heuristic
+    #
+    #     # MAKE MOVE!!!
+    #     if (rec_level == 0) and (best_move != self.NOT_INITIALIZED):
+    #         if not is_sheep:
+    #             if not dangerous_wolf_position:
+    #                 sorted_moves =sorted(moves_eval_dict.items(), key=lambda x: (x[1], x[0]))
+    #                 for eval in sorted_moves:
+    #                     if (eval[1] == moves_eval_dict[best_move]) and (eval[0] % 4 in [2, 3]):
+    #                         best_move = eval[0]
+    #                         break
+    #         return best_move
+    #
+    #     #print("ThE BEST MOVE IS: ", best_move)
+    #     return min_max
 
-    def is_can_move(self, i, j):
-        if not ((i >= 0) and (j >= 0) and (i < self.options.board_size) and (j < self.options.board_size)):
-            return False
-        if self.map[i][j] != 0:
-            return False
-        if self.board[i][j].figure != Foo.EMPTY_CELL:
-            return False
-
-        return True
-
-    def temporary_move(self, index, cell_to_i, cell_to_j):
-        cell_to = self.board[cell_to_i][cell_to_j]
-
-        if index == 0:
-            self.map[self.wolf.i][self.wolf.j] = 0
-            self.map[cell_to_i][cell_to_j] = Foo.WOLF
-            self.move_figure(self.wolf, cell_to)
-            self.wolf = cell_to
-        else:
-            sheep = self.sheeps[index - 1]
-            self.map[sheep.i][sheep.j] = 0
-            self.map[cell_to_i][cell_to_j] = Foo.SHEEP
-            self.move_figure(sheep, cell_to)
-            self.update_sheeps(sheep, cell_to)
-
-        # 0..253 -wolf; 254 - victor sheep
-
-    def min_max(self, player, rec_level, alpha, beta):
-        dangerous_wolf_position =False
-        if rec_level == 0:
-            self.prepare_map()
-
-        is_sheep = True if (player == Foo.SHEEP) else False
-        best_move = self.NOT_INITIALIZED
-
-        min_max = self.MIN_VALUE if is_sheep else self.MAX_VALUE;
-
-        result_min_max = self.NOT_INITIALIZED
-
-        if rec_level >= (self.options.ai_level * 2):
-            heuristic = self.get_heuristic_eval()
-            self.prepare_map()
-            return heuristic
-
-        moves_eval_dict = {}
-
-        for i in range(0 if is_sheep else self.options.board_size, self.options.board_size if is_sheep else (self.options.board_size + 4)):
-            # self.update_figures()
-
-            cur_figure_indx = (i // 2 + 1) if is_sheep else 0
-
-            cur_figure = self.wolf if cur_figure_indx == 0 else self.sheeps[cur_figure_indx - 1]
-            cur_move = self.possible_moves[i % 2 if is_sheep else i % 4]
-
-            back_i = cur_figure.i
-            back_j = cur_figure.j
-
-
-            run_minmax = True
-            result_min_max = 0
-            if self.is_can_move(cur_figure.i + cur_move[0], cur_figure.j + cur_move[1]):
-
-                self.temporary_move(cur_figure_indx, cur_figure.i + cur_move[0], cur_figure.j + cur_move[1])
-                #self.gb.draw_board(self.options, self.board, 800)
-
-                # Don't run minmax if the wolf have last victory move
-                if not is_sheep and rec_level == 0 and self.wolf_is_victory():
-                    self.temporary_move(cur_figure_indx, back_i, back_j)
-                    best_move = i
-                    dangerous_wolf_position = True
-                    break
-
-                # Don't run minmax if sheep have last victory move
-                if is_sheep and rec_level == 0 and self.wolf_is_lost():
-                    self.temporary_move(cur_figure_indx, back_i, back_j)
-                    best_move = i
-                    break
-
-                # Don't commit suicide, dear The Wolf
-                if rec_level == 1 and is_sheep and self.wolf_is_lost():
-                    result_min_max = self.MAX_VALUE - 1
-                    run_minmax = False
-
-                if run_minmax:
-                    result_min_max = self.min_max(Foo.WOLF if is_sheep else Foo.SHEEP, rec_level + 1, alpha, beta)
-
-                self.temporary_move(cur_figure_indx, back_i, back_j)
-                #self.gb.draw_board(self.options, self.board, 800)
-
-                if rec_level == 0:
-                    moves_eval_dict[i] = result_min_max
-
-                if ((result_min_max > min_max) and is_sheep) or (
-                        result_min_max <= min_max and player == Foo.WOLF) or best_move == self.NOT_INITIALIZED:
-                    min_max = result_min_max
-                    best_move = i
-
-                if is_sheep:
-                    alpha = alpha if alpha > result_min_max else result_min_max
-                else:
-                    beta = beta if beta < result_min_max else result_min_max
-                if (beta < alpha):
-                    break
-
-        if best_move == self.NOT_INITIALIZED:
-            heuristic = self.get_heuristic_eval()
-            self.prepare_map()
-            return heuristic
-
-        # MAKE MOVE!!!
-        if (rec_level == 0) and (best_move != self.NOT_INITIALIZED):
-            if not is_sheep:
-                if not dangerous_wolf_position:
-                    sorted_moves =sorted(moves_eval_dict.items(), key=lambda x: (x[1], x[0]))
-                    for eval in sorted_moves:
-                        if (eval[1] == moves_eval_dict[best_move]) and (eval[0] % 4 in [2, 3]):
-                            best_move = eval[0]
-                            break
-            return best_move
-
-        #print("ThE BEST MOVE IS: ", best_move)
-        return min_max
-
-    def get_heuristic_eval(self):
-        wolf_point = self.options.board_size - 1 if self.options.who_is_top == Foo.WOLF else 0
-        if self.wolf.i == wolf_point:
-            return 0
-
-        self.search_way.queue.clear()
-        self.search_way.put(self.wolf)
-
-        while not self.search_way.empty():
-            cur_cell = self.search_way.get()
-
-            for k in range(4):
-                n = cur_cell.i + self.possible_moves[k][0]
-                m = cur_cell.j + self.possible_moves[k][1]
-                if self.is_can_move(n, m):
-                    cell = self.board[n][m]
-                    self.map[cell.i][cell.j] = self.map[cur_cell.i][cur_cell.j] + 1
-                    self.search_way.put(cell)
-
-        min = self.MAX_VALUE
-        for i in range(self.options.board_size//2):
-            if (self.map[0][i * 2] > self.MIN_VALUE) and (self.map[0][i * 2] < min):
-                min = self.map[0][i * 2]
-
-        return min - 2
+    # def get_heuristic_eval(self):
+    #     wolf_point = self.options.board_size - 1 if self.options.who_is_top == Foo.WOLF else 0
+    #     if self.wolf.i == wolf_point:
+    #         return 0
+    #
+    #     self.search_way.queue.clear()
+    #     self.search_way.put(self.wolf)
+    #
+    #     while not self.search_way.empty():
+    #         cur_cell = self.search_way.get()
+    #
+    #         for k in range(4):
+    #             n = cur_cell.i + self.possible_moves[k][0]
+    #             m = cur_cell.j + self.possible_moves[k][1]
+    #             if self.is_can_move(n, m):
+    #                 cell = self.board[n][m]
+    #                 self.map[cell.i][cell.j] = self.map[cur_cell.i][cur_cell.j] + 1
+    #                 self.search_way.put(cell)
+    #
+    #     min = self.MAX_VALUE
+    #     for i in range(self.options.board_size//2):
+    #         if (self.map[0][i * 2] > self.MIN_VALUE) and (self.map[0][i * 2] < min):
+    #             min = self.map[0][i * 2]
+    #
+    #     return min - 2
