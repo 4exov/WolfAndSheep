@@ -1,14 +1,13 @@
+# options.py (UI layer)
 from foo import Foo
 
-
 class Options:
-    who_is_top = Foo.SHEEP
+    who_is_top = Foo.SHEEP  # keep your existing class-level constants if you use them
     won = Foo.NOT_INIT
     board_size = Foo.SIZE_8
     cell_size = 90
-    mode = Foo.MODE_PLAYER_VS_PLAYER
+    mode = Foo.MODE_PLAYER_WOLF_VS_COMPUTER     # or whatever your default is
     ai_level = Foo.AI_2
-
     whose_move = Foo.NOT_INIT
 
     is_running = False
@@ -37,3 +36,7 @@ class Options:
         self.is_wolf_position_init = False
         self.is_possible_skip_move_for_wolf = True
         self.set_wolf_manually = Foo.SET_WOLF_MANUALLY_NO
+        self.is_manually_set_wolf_cancels_move = True
+
+        # NEW:
+        self.placement_mode = False

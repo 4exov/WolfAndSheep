@@ -389,7 +389,6 @@ class Gameboard:
 
     def start_the_game(self):
         self.opt.set_default()
-
         try:
             if self.menu is not None:
                 # Get settings from menu widgets
@@ -403,16 +402,23 @@ class Gameboard:
                 self.opt.ai_level = ai_level[0][1]
 
                 mode = self.menu.get_widget('set_wolf_manually_selector_id', False).get_value()
-                self.opt.set_wolf_manually = mode[0][0]
+                self.opt.set_wolf_manually = mode[0][0]  # 'YES' or 'NO'
 
                 self.menu.disable()
         except Exception as e:
             print(f"Using default settings: {e}")
-            # Use default settings if menu is not available
+            # Fallback defaults
             self.opt.board_size = Foo.SIZE_8
             self.opt.mode = Foo.MODE_PLAYER_VS_PLAYER
             self.opt.ai_level = Foo.AI_3
             self.opt.set_wolf_manually = Foo.SET_WOLF_MANUALLY_NO
+
+        # >>> RUN THIS ALWAYS, AFTER values are set <<<
+        self.opt.placement_mode = (self.opt.set_wolf_manually == Foo.SET_WOLF_MANUALLY_YES)
+        if self.opt.placement_mode:
+            self.opt.is_wolf_position_init = False
+        else:
+            self.opt.is_wolf_position_init = True
 
         self.opt.is_running = True
 
@@ -427,7 +433,7 @@ class Gameboard:
             # Try loading image with safe_load_image
             bg_image = self.safe_load_image(Foo.MENU_BG)
             self.win.blit(bg_image, self.pg.rect.Rect(0, 0, self.WIN_WIDTH, self.WIN_HEIGHT))
-           #  print("Successfully loaded menu background")
+#            print("Successfully loaded menu background")
         except Exception as e:
             # Create a more visually appealing fallback background
             for i in range(0, self.WIN_HEIGHT, 10):
